@@ -31,7 +31,7 @@
     <div class="row g-4">
       {% for card in app_cards %}
         <div class="col-md-6 col-lg-4">
-          {% include "components/card.html" with title=card.name description="Example application" link_url=card.url link_text="Open →" %}
+          {% include "components/card.html" with title=card.name description=card.description link_url=card.url link_text="Open →" %}
         </div>
       {% endfor %}
     </div>

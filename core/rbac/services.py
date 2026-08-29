@@ -29,6 +29,25 @@ def has_permission(user, permission):
     return user.has_perm(permission)
 
 
+# Alias matching the RBAC vocabulary used by business application code.
+can = has_permission
+
+
+def can_access_app(user, app_key):
+    """Return True if the user may access the registered application."""
+    if not user.is_authenticated:
+        return False
+
+    from core.app_registry import registry
+
+    try:
+        manifest = registry.get(app_key)
+    except KeyError:
+        return False
+
+    return user.has_perm(manifest.access_permission)
+
+
 def set_user_access(user, role, is_active):
     """Assign a single platform role and active status to a user."""
     target_group, _ = Group.objects.get_or_create(name=role.value)
