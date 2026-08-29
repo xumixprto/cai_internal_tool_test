@@ -1,4 +1,5 @@
-"""Role-based access control.
+"""Role-based access control for the Internal Tools Platform.
 
-Milestone 2 will add roles, permissions, and permission-aware navigation.
+RBAC helpers wrap Django's built-in Groups and Permissions so business code does
+not hardcode group names or permission strings.
 """

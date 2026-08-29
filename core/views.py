@@ -1,18 +1,22 @@
 """Platform-level views."""
 
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
 from core.navigation.registry import get_nav_items
+from core.rbac.services import get_user_role
 
 
+@login_required(login_url="/login/")
 def dashboard(request):
-    """Landing page for the Internal Tools Platform."""
+    """Landing page for authenticated users."""
     nav_items = get_nav_items(request)
-    app_cards = [item for item in nav_items if item["key"] != "dashboard"]
+    app_cards = [item for item in nav_items if item["key"] not in ("dashboard", "admin")]
+    role = get_user_role(request.user)
     stats = {
         "applications": len(app_cards),
-        "open_tasks": "—",
-        "current_user": "Demo User",
+        "current_user": request.user.get_full_name() or request.user.username,
+        "role": role.value if role else "—",
     }
     return render(
         request,
@@ -24,4 +28,14 @@ def dashboard(request):
             "app_cards": app_cards,
             "stats": stats,
         },
+    )
+
+
+def permission_denied(request, exception=None):
+    """Render a platform-style 403 page."""
+    return render(
+        request,
+        "errors/403.html",
+        {"page_title": "Access Denied"},
+        status=403,
     )

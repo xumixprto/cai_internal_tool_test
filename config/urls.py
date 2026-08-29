@@ -3,11 +3,13 @@
 from django.contrib import admin
 from django.urls import include, path
 
-from core.views import dashboard
+from core import views as core_views
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("", dashboard, name="dashboard"),
-    path("apps/demo-one/", include("apps.demo_one.urls")),
-    path("apps/demo-two/", include("apps.demo_two.urls")),
+    path("", include("core.authentication.urls")),
+    path("platform-admin/", include("core.admin_panel.urls")),
+    path("", core_views.dashboard, name="dashboard"),
 ]
+
+handler403 = "core.views.permission_denied"
