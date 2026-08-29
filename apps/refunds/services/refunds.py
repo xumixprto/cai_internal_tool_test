@@ -4,6 +4,7 @@ from django.db import transaction
 
 from apps.refunds.models.refund import RefundRequest
 from apps.refunds.providers.refund_provider import LocalRefundProvider
+from shared.services.activity import build_activity
 from shared.services.primitives import assignments, audit, comments, status_history
 
 
@@ -124,49 +125,10 @@ class RefundService:
 
     def get_activity(self, refund):
         """Return a chronological activity feed for the refund."""
-        entries = []
-        for record in status_history.for_object(refund):
-            entries.append(
-                {
-                    "type": "status",
-                    "timestamp": record.created_at,
-                    "actor": record.actor,
-                    "message": f"Status changed to {record.get_new_status_display()}"
-                    if hasattr(record, "get_new_status_display")
-                    else f"Status changed to {record.new_status}",
-                    "note": record.note,
-                }
-            )
-        for log in audit.for_object(refund):
-            entries.append(
-                {
-                    "type": "audit",
-                    "timestamp": log.timestamp,
-                    "actor": log.actor,
-                    "message": log.action.replace(".", " ").replace("_", " ").title(),
-                    "metadata": log.metadata,
-                }
-            )
-        for note in comments.for_object(refund):
-            entries.append(
-                {
-                    "type": "note",
-                    "timestamp": note.created_at,
-                    "actor": note.author,
-                    "message": note.body,
-                }
-            )
-        for record in assignments.history_for(refund):
-            entries.append(
-                {
-                    "type": "assignment",
-                    "timestamp": record.assigned_at,
-                    "actor": record.assigned_by,
-                    "message": f"Assigned to {record.assigned_to}",
-                }
-            )
-        entries.sort(key=lambda e: e["timestamp"], reverse=True)
-        return entries
+        return build_activity(
+            refund,
+            status_display=dict(RefundRequest.Status.choices),
+        )
 
 
 refund_service = RefundService()

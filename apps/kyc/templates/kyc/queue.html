@@ -1,0 +1,32 @@
+{% extends "shell/app_shell.html" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+  {% include "components/page_header.html" with title=page_title subtitle="Review and verify KYC cases." %}
+
+  <form method="get" class="row g-2 mb-4 align-items-end">
+    <div class="col-md-3">
+      {% include "components/form_field.html" with field=filter_form.q %}
+    </div>
+    <div class="col-md-2">
+      {% include "components/form_field.html" with field=filter_form.status %}
+    </div>
+    <div class="col-md-2">
+      {% include "components/form_field.html" with field=filter_form.risk %}
+    </div>
+    <div class="col-md-2">
+      {% include "components/form_field.html" with field=filter_form.verification %}
+    </div>
+    <div class="col-md-2">
+      {% include "components/form_field.html" with field=filter_form.assigned_to %}
+    </div>
+    <div class="col-md-1 d-grid gap-2">
+      <button type="submit" class="btn btn-outline-primary">Filter</button>
+      <a href="{% url 'kyc:index' %}" class="btn btn-link btn-sm">Clear</a>
+    </div>
+  </form>
+
+  {% include "components/table.html" with headers=table_headers rows=table_rows safe=True action_column=True empty_message="No KYC cases found." %}
+  {% include "components/pagination.html" %}
+{% endblock %}

@@ -15,6 +15,7 @@ urlpatterns = [
     # Business applications are mounted under /apps/<app-key>/ by convention.
     path("apps/refunds/", include("apps.refunds.urls")),
     path("apps/vendors/", include("apps.vendors.urls")),
+    path("apps/kyc/", include("apps.kyc.urls")),
 ]
 
 handler403 = "core.views.permission_denied"

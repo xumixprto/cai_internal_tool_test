@@ -4,6 +4,7 @@ from django.db import transaction
 
 from apps.vendors.models.vendor import VendorApplication
 from apps.vendors.providers.vendor_provider import LocalVendorProvider
+from shared.services.activity import build_activity
 from shared.services.primitives import assignments, audit, comments, status_history
 
 
@@ -199,54 +200,11 @@ class VendorService:
 
     def get_activity(self, vendor):
         """Return a chronological activity feed for the vendor."""
-        entries = [
-            {
-                "type": "submitted",
-                "timestamp": vendor.created_at,
-                "actor": None,
-                "message": "Application submitted",
-            }
-        ]
-        for record in status_history.for_object(vendor):
-            entries.append(
-                {
-                    "type": "status",
-                    "timestamp": record.created_at,
-                    "actor": record.actor,
-                    "message": f"Status changed to {record.new_status}",
-                    "note": record.note,
-                }
-            )
-        for log in audit.for_object(vendor):
-            entries.append(
-                {
-                    "type": "audit",
-                    "timestamp": log.timestamp,
-                    "actor": log.actor,
-                    "message": log.action.replace(".", " ").replace("_", " ").title(),
-                    "metadata": log.metadata,
-                }
-            )
-        for note in comments.for_object(vendor):
-            entries.append(
-                {
-                    "type": "note",
-                    "timestamp": note.created_at,
-                    "actor": note.author,
-                    "message": note.body,
-                }
-            )
-        for record in assignments.history_for(vendor):
-            entries.append(
-                {
-                    "type": "assignment",
-                    "timestamp": record.assigned_at,
-                    "actor": record.assigned_by,
-                    "message": f"Assigned to {record.assigned_to}",
-                }
-            )
-        entries.sort(key=lambda e: e["timestamp"], reverse=True)
-        return entries
+        return build_activity(
+            vendor,
+            submitted_message="Application submitted",
+            status_display=dict(VendorApplication.Status.choices),
+        )
 
 
 vendor_service = VendorService()
