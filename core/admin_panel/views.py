@@ -51,7 +51,11 @@ def user_edit(request, user_id):
             set_user_access(target_user, role, form.cleaned_data["is_active"])
             # Ensure all app permissions exist before assigning them.
             sync_app_permissions()
-            set_user_app_access(target_user, form.get_selected_app_keys())
+            set_user_app_access(
+                target_user,
+                form.get_selected_app_keys(),
+                form.get_selected_action_permissions(),
+            )
             return redirect(reverse("core_admin_panel:index"))
     else:
         current_role = get_user_role(target_user)

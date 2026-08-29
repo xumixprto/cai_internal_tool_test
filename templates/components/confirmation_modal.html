@@ -1,0 +1,21 @@
+<div class="modal fade" id="{{ modal_id|default:'confirmModal' }}" tabindex="-1" aria-labelledby="{{ modal_id|default:'confirmModal' }}Label" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="{{ modal_id|default:'confirmModal' }}Label">{{ title|default:'Are you sure?' }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        {{ message|default:'Please confirm this action.' }}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ cancel_label|default:'Cancel' }}</button>
+        {% if confirm_url %}
+          <a href="{{ confirm_url }}" class="btn btn-{{ confirm_style|default:'danger' }}">{{ confirm_label|default:'Confirm' }}</a>
+        {% else %}
+          <button type="submit" class="btn btn-{{ confirm_style|default:'danger' }}">{{ confirm_label|default:'Confirm' }}</button>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>

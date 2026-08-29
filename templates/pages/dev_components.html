@@ -1,0 +1,90 @@
+{% extends "shell/app_shell.html" %}
+{% load platform_extras %}
+
+{% block content %}
+  {% include "components/page_header.html" with title="Component Showcase" subtitle="Reusable frontend primitives for business applications" %}
+
+  <div class="row g-4">
+    <div class="col-12">
+      <h5 class="h6 text-muted text-uppercase">Alerts</h5>
+      {% include "components/alert.html" with message="This is a success alert." variant="success" dismissible=True %}
+      {% include "components/alert.html" with message="This is an informational alert." variant="info" dismissible=True %}
+      {% include "components/alert.html" with message="Warning: review required." variant="warning" %}
+      {% include "components/alert.html" with message="Something went wrong." variant="danger" %}
+    </div>
+
+    <div class="col-12">
+      <h5 class="h6 text-muted text-uppercase">Badges &amp; Buttons</h5>
+      {% include "components/badge.html" with label="Pending" style="warning" %}
+      {% include "components/badge.html" with label="Approved" style="success" %}
+      {% include "components/badge.html" with label="Rejected" style="danger" %}
+      <div class="mt-2">
+        {% include "components/button.html" with label="Primary" style="primary" %}
+        {% include "components/button.html" with label="Secondary" style="secondary" %}
+        {% include "components/button.html" with label="Danger" style="danger" %}
+        {% include "components/button.html" with label="Outline" style="outline-primary" %}
+      </div>
+    </div>
+
+    <div class="col-12">
+      <h5 class="h6 text-muted text-uppercase">Filter Bar</h5>
+      {% include "components/filter_bar.html" with search_name="q" status_name="status" date_name="date" status_options=status_options clear_url=request.path %}
+    </div>
+
+    <div class="col-12">
+      <h5 class="h6 text-muted text-uppercase">Table</h5>
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+          {% include "components/table.html" with headers=table_headers rows=table_rows action_column=True safe=True %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <h5 class="h6 text-muted text-uppercase">Empty State</h5>
+      {% include "components/empty_state.html" with message="No items match your filters." %}
+    </div>
+
+    <div class="col-md-6">
+      <h5 class="h6 text-muted text-uppercase">Form Fields</h5>
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          {% include "components/form_field.html" with field=sample_form.name %}
+          {% include "components/form_field.html" with field=sample_form.email %}
+          {% include "components/form_field.html" with field=sample_form.role %}
+          {% include "components/form_field.html" with field=sample_form.notes %}
+          {% include "components/form_field.html" with field=sample_form.due_date %}
+          {% include "components/form_field.html" with field=sample_form.is_active %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <h5 class="h6 text-muted text-uppercase">Standalone Inputs</h5>
+      {% include "components/text_field.html" with name="sample_text" label="Text Field" placeholder="Type something..." %}
+      {% include "components/textarea.html" with name="sample_textarea" label="Textarea" %}
+      {% include "components/select.html" with name="sample_select" label="Select" options=sample_options %}
+      {% include "components/checkbox.html" with name="sample_checkbox" label="I agree" checked=True %}
+      {% include "components/date_input.html" with name="sample_date" label="Date Input" %}
+      {% include "components/search_input.html" with name="sample_search" value="query" %}
+    </div>
+
+    <div class="col-12">
+      <h5 class="h6 text-muted text-uppercase">Detail Section</h5>
+      {% include "components/detail_section.html" with title="Request Details" rows=detail_rows %}
+    </div>
+
+    <div class="col-12">
+      <h5 class="h6 text-muted text-uppercase">Pagination</h5>
+      {% include "components/pagination.html" with page_obj=page_obj %}
+    </div>
+
+    <div class="col-12">
+      <h5 class="h6 text-muted text-uppercase">Confirmation Modal</h5>
+      <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#demoConfirmModal">
+        Open Confirmation Modal
+      </button>
+      {% include "components/confirmation_modal.html" with modal_id="demoConfirmModal" title="Delete record?" message="This action cannot be undone." confirm_url="#" confirm_label="Delete" confirm_style="danger" %}
+    </div>
+  </div>
+{% endblock %}

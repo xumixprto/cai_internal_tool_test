@@ -1,7 +1,19 @@
-{% if page_title and page_title != "Internal Tools" %}
+{% if breadcrumbs %}
   <nav aria-label="breadcrumb" class="mb-3">
     <ol class="breadcrumb mb-0">
-      <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Home</a></li>
+      {% for crumb in breadcrumbs %}
+        {% if forloop.last or not crumb.url %}
+          <li class="breadcrumb-item{% if forloop.last %} active" aria-current="page{% endif %}">{{ crumb.label }}</li>
+        {% else %}
+          <li class="breadcrumb-item"><a href="{{ crumb.url }}">{{ crumb.label }}</a></li>
+        {% endif %}
+      {% endfor %}
+    </ol>
+  </nav>
+{% elif page_title and page_title != 'Internal Tools' %}
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb mb-0">
+      <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
       <li class="breadcrumb-item active" aria-current="page">{{ page_title }}</li>
     </ol>
   </nav>

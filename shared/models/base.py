@@ -1,7 +1,7 @@
 from django.db import models
 
 
-class TimeStampedModel(models.Model):
+class TimestampedModel(models.Model):
     """Abstract base model with created/updated timestamps."""
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -9,3 +9,7 @@ class TimeStampedModel(models.Model):
 
     class Meta:
         abstract = True
+
+
+# Backwards-compatible alias.
+TimeStampedModel = TimestampedModel

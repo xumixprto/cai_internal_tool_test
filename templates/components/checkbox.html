@@ -1,0 +1,6 @@
+<div class="form-check mb-3">
+  <input class="form-check-input{% if error %} is-invalid{% endif %}" type="checkbox" name="{{ name }}" id="{{ id|default:name }}" value="{{ value|default:'on' }}"{% if checked %} checked{% endif %}{% if required %} required{% endif %}{% if disabled %} disabled{% endif %}>
+  <label class="form-check-label" for="{{ id|default:name }}">{{ label }}{% if required %} <span class="text-danger">*</span>{% endif %}</label>
+  {% if help %}<div class="form-text">{{ help }}</div>{% endif %}
+  {% if error %}<div class="invalid-feedback d-block">{{ error }}</div>{% endif %}
+</div>

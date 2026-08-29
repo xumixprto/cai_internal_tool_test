@@ -48,6 +48,22 @@ def can_access_app(user, app_key):
     return user.has_perm(manifest.access_permission)
 
 
+def can_perform_action(user, app_key, action_key):
+    """Return True if the user has app access and the action permission."""
+    if not can_access_app(user, app_key):
+        return False
+
+    from core.app_registry import registry
+
+    try:
+        manifest = registry.get(app_key)
+        action = manifest.get_action(action_key)
+    except KeyError:
+        return False
+
+    return user.has_perm(action.permission)
+
+
 def set_user_access(user, role, is_active):
     """Assign a single platform role and active status to a user."""
     target_group, _ = Group.objects.get_or_create(name=role.value)
