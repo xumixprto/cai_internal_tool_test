@@ -12,10 +12,8 @@ urlpatterns = [
     path("", core_views.dashboard, name="dashboard"),
     # Developer-only component showcase.  The view raises 404 when DEBUG is False.
     path("dev/components/", core_views.components_showcase, name="dev_components"),
+    # Business applications are mounted under /apps/<app-key>/ by convention.
+    path("apps/refunds/", include("apps.refunds.urls")),
 ]
-
-# Business applications are mounted under /apps/<app-key>/ by convention.
-# Example:
-#   path("apps/refunds/", include("apps.refunds.urls")),
 
 handler403 = "core.views.permission_denied"

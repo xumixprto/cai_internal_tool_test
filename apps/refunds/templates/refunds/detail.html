@@ -1,0 +1,207 @@
+{% extends "shell/app_shell.html" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+  {% include "components/page_header.html" with title=page_title subtitle="Refund request details and review actions." %}
+
+  <div class="row">
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <h5 class="card-title fw-semibold mb-0">Refund Information</h5>
+            <span class="badge rounded-pill bg-{{ status_badge_style|default:'secondary' }}">{{ refund.get_status_display }}</span>
+          </div>
+          <dl class="row mb-0">
+            <dt class="col-sm-4 text-muted small">Customer</dt>
+            <dd class="col-sm-8">{{ refund.customer_name }}<br><span class="text-muted small">{{ refund.customer_email }}</span></dd>
+
+            <dt class="col-sm-4 text-muted small">Transaction ID</dt>
+            <dd class="col-sm-8">{{ refund.transaction_id }}</dd>
+
+            <dt class="col-sm-4 text-muted small">Amount</dt>
+            <dd class="col-sm-8">{{ refund.amount }} {{ refund.currency }}</dd>
+
+            <dt class="col-sm-4 text-muted small">Reason</dt>
+            <dd class="col-sm-8">{{ refund.reason }}</dd>
+
+            <dt class="col-sm-4 text-muted small">Requested</dt>
+            <dd class="col-sm-8">{{ refund.created_at|date:"Y-m-d H:i" }}</dd>
+
+            <dt class="col-sm-4 text-muted small">Updated</dt>
+            <dd class="col-sm-8">{{ refund.updated_at|date:"Y-m-d H:i" }}</dd>
+
+            {% if current_assignment %}
+              <dt class="col-sm-4 text-muted small">Assigned To</dt>
+              <dd class="col-sm-8">{{ current_assignment.assigned_to }}</dd>
+            {% endif %}
+
+            {% if refund.external_reference %}
+              <dt class="col-sm-4 text-muted small">External Reference</dt>
+              <dd class="col-sm-8"><code>{{ refund.external_reference }}</code></dd>
+            {% endif %}
+
+            {% if refund.rejection_reason %}
+              <dt class="col-sm-4 text-muted small">Rejection Reason</dt>
+              <dd class="col-sm-8">{{ refund.rejection_reason }}</dd>
+            {% endif %}
+          </dl>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+          <h5 class="card-title fw-semibold mb-3">Activity History</h5>
+          {% if activity %}
+            <ul class="list-unstyled mb-0">
+              {% for entry in activity %}
+                <li class="mb-3 pb-3 border-bottom{% if forloop.last %} mb-0 pb-0 border-bottom-0{% endif %}">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <span class="fw-semibold">{{ entry.message }}</span>
+                    <small class="text-muted text-nowrap ms-2">{{ entry.timestamp|date:"Y-m-d H:i" }}</small>
+                  </div>
+                  {% if entry.actor %}
+                    <div class="text-muted small">by {{ entry.actor }}</div>
+                  {% endif %}
+                  {% if entry.note %}
+                    <p class="mb-0 text-muted small mt-1">{{ entry.note }}</p>
+                  {% endif %}
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted mb-0">No activity yet.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+          <h5 class="card-title fw-semibold mb-3">Actions</h5>
+
+          {% if is_terminal %}
+            <p class="text-muted mb-0">This refund is {{ refund.get_status_display|lower }}.</p>
+          {% else %}
+            {% if can_approve %}
+              <button type="button" class="btn btn-success w-100 mb-2" data-bs-toggle="modal" data-bs-target="#approveModal">Approve</button>
+            {% endif %}
+
+            {% if can_reject %}
+              <button type="button" class="btn btn-danger w-100 mb-2" data-bs-toggle="modal" data-bs-target="#rejectModal">Reject</button>
+            {% endif %}
+
+            {% if can_assign %}
+              <button type="button" class="btn btn-outline-primary w-100 mb-2" data-bs-toggle="modal" data-bs-target="#assignModal">Assign</button>
+            {% endif %}
+
+            {% if not can_approve and not can_reject and not can_assign %}
+              <p class="text-muted mb-0">You do not have permission to perform actions on this refund.</p>
+            {% endif %}
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+          <h5 class="card-title fw-semibold mb-3">Add Note</h5>
+          <form method="post" action="{% url 'refunds:note' refund.pk %}">
+            {% csrf_token %}
+            {% include "components/form_field.html" with field=note_form.body %}
+            <button type="submit" class="btn btn-outline-secondary btn-sm w-100">Add Note</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+          <h5 class="card-title fw-semibold mb-3">Notes</h5>
+          {% if notes %}
+            <ul class="list-unstyled mb-0">
+              {% for note in notes %}
+                <li class="mb-3 pb-3 border-bottom{% if forloop.last %} mb-0 pb-0 border-bottom-0{% endif %}">
+                  <p class="mb-1">{{ note.body }}</p>
+                  <div class="d-flex justify-content-between text-muted small">
+                    <span>{{ note.author }}</span>
+                    <span>{{ note.created_at|date:"Y-m-d H:i" }}</span>
+                  </div>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted mb-0">No notes yet.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Approve Modal -->
+  <div class="modal fade" id="approveModal" tabindex="-1" aria-labelledby="approveModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <form method="post" action="{% url 'refunds:approve' refund.pk %}">
+          {% csrf_token %}
+          <div class="modal-header">
+            <h5 class="modal-title" id="approveModalLabel">Approve Refund #{{ refund.pk }}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            Are you sure you want to approve the refund for <strong>{{ refund.customer_name }}</strong> ({{ refund.amount }} {{ refund.currency }})?
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-success">Approve Refund</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reject Modal -->
+  <div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <form method="post" action="{% url 'refunds:reject' refund.pk %}">
+          {% csrf_token %}
+          <div class="modal-header">
+            <h5 class="modal-title" id="rejectModalLabel">Reject Refund #{{ refund.pk }}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <p>Please provide a reason for rejecting this refund.</p>
+            {% include "components/form_field.html" with field=reject_form.reason %}
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-danger">Reject Refund</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Assign Modal -->
+  <div class="modal fade" id="assignModal" tabindex="-1" aria-labelledby="assignModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <form method="post" action="{% url 'refunds:assign' refund.pk %}">
+          {% csrf_token %}
+          <div class="modal-header">
+            <h5 class="modal-title" id="assignModalLabel">Assign Refund #{{ refund.pk }}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            {% include "components/form_field.html" with field=assign_form.assigned_to %}
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary">Assign</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}
