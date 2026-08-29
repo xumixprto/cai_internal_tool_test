@@ -1,0 +1,13 @@
+<div class="mb-3">
+  <label for="{{ id|default:name }}" class="form-label">{{ label }}{% if required %} <span class="text-danger">*</span>{% endif %}</label>
+  <select name="{{ name }}" id="{{ id|default:name }}" class="form-select{% if error %} is-invalid{% endif %}"{% if required %} required{% endif %}{% if disabled %} disabled{% endif %}>
+    {% if empty_option is not None %}
+      <option value="">{{ empty_option }}</option>
+    {% endif %}
+    {% for option in options %}
+      <option value="{{ option.value }}"{% if option.value == value %} selected{% endif %}>{{ option.label }}</option>
+    {% endfor %}
+  </select>
+  {% if help %}<div class="form-text">{{ help }}</div>{% endif %}
+  {% if error %}<div class="invalid-feedback d-block">{{ error }}</div>{% endif %}
+</div>

@@ -3,7 +3,7 @@
 {% block content %}
   {% include "components/page_header.html" with title="Edit Access" subtitle="Edit access for "|add:target_user.username %}
 
-  <div class="card border-0 shadow-sm" style="max-width: 480px;">
+  <div class="card border-0 shadow-sm" style="max-width: 520px;">
     <div class="card-body">
       <form method="post" action="{% url 'core_admin_panel:user_edit' target_user.id %}">
         {% csrf_token %}
@@ -23,12 +23,26 @@
         </div>
 
         <label class="form-label small text-muted">Application Access</label>
-        {% if form.app_fields %}
+        {% if form.app_groups %}
           <div class="mb-4">
-            {% for field in form.app_fields %}
-              <div class="form-check">
-                <input type="checkbox" name="{{ field.name }}" id="{{ field.id_for_label }}" class="form-check-input"{% if field.value %} checked{% endif %}>
-                <label for="{{ field.id_for_label }}" class="form-check-label">{{ field.label }}</label>
+            {% for group in form.app_groups %}
+              <div class="border rounded p-3 mb-3 app-access-group">
+                <div class="form-check">
+                  <input type="checkbox" name="{{ group.access.name }}" id="{{ group.access.id_for_label }}" class="form-check-input app-access-toggle"{% if group.access.value %} checked{% endif %}>
+                  <label for="{{ group.access.id_for_label }}" class="form-check-label fw-semibold">{{ group.access.label }}</label>
+                </div>
+
+                {% if group.actions %}
+                  <div class="mt-2 ms-4">
+                    <span class="text-muted small">Actions</span>
+                    {% for action in group.actions %}
+                      <div class="form-check">
+                        <input type="checkbox" name="{{ action.name }}" id="{{ action.id_for_label }}" class="form-check-input app-action-toggle"{% if action.value %} checked{% endif %}{% if not group.access.value %} disabled{% endif %} data-initial-checked="{{ action.value|yesno:'true,false' }}">
+                        <label for="{{ action.id_for_label }}" class="form-check-label small">{{ action.label }}</label>
+                      </div>
+                    {% endfor %}
+                  </div>
+                {% endif %}
               </div>
             {% endfor %}
           </div>
@@ -45,4 +59,25 @@
       </form>
     </div>
   </div>
+
+  <script>
+    // Disable action checkboxes when application access is unchecked.
+    document.querySelectorAll('.app-access-group').forEach(function (group) {
+      var toggle = group.querySelector('.app-access-toggle');
+      var actions = group.querySelectorAll('.app-action-toggle');
+      function updateActions() {
+        actions.forEach(function (action) {
+          if (!toggle.checked) {
+            action.disabled = true;
+            action.checked = false;
+          } else {
+            action.disabled = false;
+            action.checked = action.getAttribute('data-initial-checked') === 'true';
+          }
+        });
+      }
+      toggle.addEventListener('change', updateActions);
+      updateActions();
+    });
+  </script>
 {% endblock %}

@@ -33,10 +33,10 @@ def sync_app_permissions() -> None:
         )
         permission_ids.add(access_perm.id)
 
-        for action, action_permission in app.actions.items():
+        for action in app.actions:
             action_perm = ensure_permission(
-                action_permission,
-                name=f"Can {action} {app.name}",
+                action.permission,
+                name=f"Can {action.label} {app.name}",
             )
             permission_ids.add(action_perm.id)
 
@@ -110,26 +110,71 @@ def get_app_access_permission_ids() -> set[int]:
     return ids
 
 
-def set_user_app_access(user, app_keys: set[str]) -> None:
-    """Set a user's application access permissions.
+def get_app_action_permission_ids() -> set[int]:
+    """Return the IDs of all registered app action permissions."""
+    ids = set()
+    for app in registry.all():
+        for action in app.actions:
+            try:
+                perm = ensure_permission(action.permission)
+                ids.add(perm.id)
+            except Exception:
+                continue
+    return ids
 
-    Only app access permissions are modified; unrelated user permissions and
-    action permissions are preserved.  Role membership is unchanged.
+
+def get_all_managed_permission_ids() -> set[int]:
+    """Return IDs for all app access and app action permissions."""
+    return get_app_access_permission_ids() | get_app_action_permission_ids()
+
+
+def set_user_app_access(
+    user,
+    app_keys: set[str],
+    action_permissions: set[str] | None = None,
+) -> None:
+    """Set a user's application access and action permissions.
+
+    Only permissions managed by the registry are changed.  Unrelated user
+    permissions, role membership, and permissions for other apps are preserved.
+    Action permissions for apps whose access is removed are kept but become
+    ineffective because the action helper requires app access first.
     """
     if not user.is_authenticated:
         return
 
+    action_permissions = action_permissions or set()
+    app_keys = set(app_keys)
+
     app_access_ids = get_app_access_permission_ids()
+    app_action_ids = get_app_action_permission_ids()
+    managed_ids = app_access_ids | app_action_ids
+
     selected_ids = set()
+    preserve_action_ids = set()
     for app in registry.all():
         if app.key in app_keys:
             perm = ensure_permission(app.access_permission)
             if perm.id is not None:
                 selected_ids.add(perm.id)
+        else:
+            # Preserve action permissions for apps the user no longer has access
+            # to so they can be restored if access is re-granted later.
+            for action in app.actions:
+                perm = ensure_permission(action.permission)
+                if perm.id is not None:
+                    preserve_action_ids.add(perm.id)
+
+    for app in registry.all():
+        for action in app.actions:
+            if action.permission in action_permissions:
+                perm = ensure_permission(action.permission)
+                if perm.id is not None:
+                    selected_ids.add(perm.id)
 
     existing_ids = set(user.user_permissions.values_list("pk", flat=True))
-    unrelated_ids = existing_ids - app_access_ids
-    new_ids = unrelated_ids | selected_ids
+    unrelated_ids = existing_ids - managed_ids
+    new_ids = unrelated_ids | selected_ids | preserve_action_ids
 
     user.user_permissions.set(new_ids)
     # Invalidate Django permission caches.

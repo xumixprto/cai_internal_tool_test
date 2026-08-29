@@ -1,0 +1,17 @@
+<form method="get" class="row g-2 mb-4 align-items-end"{% if hx_get %} hx-get="{{ hx_get }}" hx-trigger="submit" hx-target="{{ hx_target|default:'#table-container' }}"{% endif %}>
+  <div class="col-md-4">
+    {% include "components/search_input.html" with name=search_name value=search_value placeholder=search_placeholder label=search_label|default:'Search' %}
+  </div>
+  <div class="col-md-3">
+    {% include "components/select.html" with name=status_name label=status_label|default:'Status' empty_option='All' options=status_options value=status_value %}
+  </div>
+  <div class="col-md-3">
+    {% include "components/date_input.html" with name=date_name label=date_label|default:'Date' value=date_value %}
+  </div>
+  <div class="col-md-2 d-grid gap-2">
+    <button type="submit" class="btn btn-outline-primary">Filter</button>
+    {% if clear_url %}
+      <a href="{{ clear_url }}" class="btn btn-link btn-sm">Clear</a>
+    {% endif %}
+  </div>
+</form>

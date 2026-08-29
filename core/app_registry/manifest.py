@@ -1,7 +1,7 @@
 """Typed manifest for Internal Tools Platform business applications."""
 
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 KEY_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 
@@ -15,6 +15,31 @@ def _is_valid_permission(value: str) -> bool:
         return False
     parts = value.rsplit(".", 1)
     return len(parts) == 2 and _is_valid_key(parts[0]) and _is_valid_key(parts[1])
+
+
+def _label_from_key(key: str) -> str:
+    return key.replace("_", " ").strip().title()
+
+
+@dataclass(frozen=True)
+class AppAction:
+    """Action exposed by a business application."""
+
+    key: str
+    permission: str
+    label: str
+    order: int = 100
+
+    def __post_init__(self):
+        errors = []
+        if not _is_valid_key(self.key):
+            errors.append(f"action key '{self.key}' must match {KEY_RE.pattern}")
+        if not self.label or not self.label.strip():
+            errors.append("action label is required")
+        if not _is_valid_permission(self.permission):
+            errors.append(f"action permission '{self.permission}' must be <app>.<codename>")
+        if errors:
+            raise ValueError("; ".join(errors))
 
 
 @dataclass(frozen=True)
@@ -32,7 +57,7 @@ class AppManifest:
     url_name: str
     access_permission: str
     icon: str = "app"
-    actions: dict[str, str] = field(default_factory=dict)
+    actions: tuple[AppAction, ...] = ()
     order: int = 100
 
     def __post_init__(self):
@@ -48,16 +73,68 @@ class AppManifest:
         if not _is_valid_permission(self.access_permission):
             errors.append(f"access_permission '{self.access_permission}' must be <app>.<codename>")
 
-        for action, permission in (self.actions or {}).items():
-            if not _is_valid_key(action):
-                errors.append(f"action name '{action}' must match {KEY_RE.pattern}")
-            if not _is_valid_permission(permission):
-                errors.append(f"action permission '{permission}' must be <app>.<codename>")
+        normalized_actions = self._normalize_actions(self.actions)
+        for action in normalized_actions:
+            if action.key == "access":
+                errors.append(
+                    "action key 'access' is reserved for the application access permission"
+                )
+            if not _is_valid_key(action.key):
+                errors.append(f"action key '{action.key}' must match {KEY_RE.pattern}")
+            if not _is_valid_permission(action.permission):
+                errors.append(f"action permission '{action.permission}' must be <app>.<codename>")
+            if not action.label or not action.label.strip():
+                errors.append(f"action label for '{action.key}' is required")
 
         if errors:
             raise ValueError("; ".join(errors))
+
+        # Frozen dataclasses require object.__setattr__ to modify the instance.
+        if normalized_actions is not self.actions:
+            object.__setattr__(self, "actions", normalized_actions)
+
+    @staticmethod
+    def _normalize_actions(value):
+        if not value:
+            return ()
+        if isinstance(value, AppAction):
+            return (value,)
+        if isinstance(value, dict):
+            return tuple(
+                AppAction(key=k, permission=p, label=_label_from_key(k)) for k, p in value.items()
+            )
+        if isinstance(value, (list, tuple)):
+            result = []
+            for item in value:
+                if isinstance(item, AppAction):
+                    result.append(item)
+                elif isinstance(item, dict):
+                    result.append(
+                        AppAction(
+                            key=item["key"],
+                            permission=item["permission"],
+                            label=item.get("label", _label_from_key(item["key"])),
+                            order=item.get("order", 100),
+                        )
+                    )
+                else:
+                    raise TypeError(f"Unsupported action value: {item!r}")
+            return tuple(result)
+        raise TypeError("actions must be a sequence of AppAction or a mapping")
 
     @property
     def access_codename(self) -> str:
         """Return the permission codename for the application's access permission."""
         return self.access_permission.rsplit(".", 1)[1]
+
+    def get_action(self, key: str) -> AppAction:
+        """Return the action with the given key."""
+        for action in self.actions:
+            if action.key == key:
+                return action
+        raise KeyError(f"No action '{key}' on app '{self.key}'")
+
+    @property
+    def actions_by_key(self) -> dict[str, AppAction]:
+        """Return actions keyed by action key."""
+        return {action.key: action for action in self.actions}

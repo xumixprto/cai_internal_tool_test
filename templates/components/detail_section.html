@@ -1,0 +1,11 @@
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body">
+    {% if title %}<h5 class="card-title fw-semibold mb-3">{{ title }}</h5>{% endif %}
+    <dl class="row mb-0">
+      {% for row in rows %}
+        <dt class="col-sm-4 text-muted small">{{ row.label }}</dt>
+        <dd class="col-sm-8">{{ row.value|default:'—' }}</dd>
+      {% endfor %}
+    </dl>
+  </div>
+</div>

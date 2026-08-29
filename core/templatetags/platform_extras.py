@@ -23,6 +23,21 @@ def status_badge(status):
     return mark_safe(f'<span class="badge rounded-pill bg-{style}">{status}</span>')
 
 
+@register.filter(is_safe=True)
+def add_class(field, css_class):
+    """Render a Django form field widget with the given CSS class added."""
+    attrs = field.field.widget.attrs or {}
+    existing = attrs.get("class", "")
+    attrs["class"] = f"{existing} {css_class}".strip()
+    return field.as_widget(attrs=attrs)
+
+
+@register.filter
+def widget_class(field):
+    """Return the widget class name for a Django form field."""
+    return field.field.widget.__class__.__name__
+
+
 @register.filter
 def platform_role(user):
     """Return the platform role for a user."""

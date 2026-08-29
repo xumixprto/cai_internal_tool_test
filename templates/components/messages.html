@@ -1,0 +1,15 @@
+{% if messages %}
+  <div class="messages mb-3">
+    {% for message in messages %}
+      {% if message.tags == 'success' %}
+        {% include "components/alert.html" with message=message variant="success" dismissible=True %}
+      {% elif message.tags == 'error' %}
+        {% include "components/alert.html" with message=message variant="danger" dismissible=True %}
+      {% elif message.tags == 'warning' %}
+        {% include "components/alert.html" with message=message variant="warning" dismissible=True %}
+      {% else %}
+        {% include "components/alert.html" with message=message variant="info" dismissible=True %}
+      {% endif %}
+    {% endfor %}
+  </div>
+{% endif %}

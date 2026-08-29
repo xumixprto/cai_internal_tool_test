@@ -1,0 +1,10 @@
+<div class="mb-3">
+  <label for="{{ id|default:name }}" class="form-label small text-muted">{{ label|default:'Search' }}</label>
+  <div class="input-group">
+    <span class="input-group-text"><i class="bi bi-search"></i></span>
+    <input type="search" name="{{ name }}" id="{{ id|default:name }}" value="{{ value|default:'' }}" class="form-control" placeholder="{{ placeholder|default:'Search...' }}"{% if hx_get %} hx-get="{{ hx_get }}"{% endif %}{% if hx_trigger %} hx-trigger="{{ hx_trigger }}"{% endif %}{% if hx_target %} hx-target="{{ hx_target }}"{% endif %}>
+    {% if submit_label %}
+      <button type="submit" class="btn btn-outline-secondary">{{ submit_label }}</button>
+    {% endif %}
+  </div>
+</div>

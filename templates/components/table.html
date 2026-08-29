@@ -6,6 +6,7 @@
           {% for header in headers %}
             <th>{{ header }}</th>
           {% endfor %}
+          {% if action_column %}<th class="text-end">Actions</th>{% endif %}
         </tr>
       </thead>
     {% endif %}
@@ -19,6 +20,12 @@
               <td>{{ cell }}</td>
             {% endif %}
           {% endfor %}
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="{{ headers|length|add:1 }}" class="p-0">
+            {% include "components/empty_state.html" with message=empty_message|default:'No records found.' %}
+          </td>
         </tr>
       {% endfor %}
     </tbody>
