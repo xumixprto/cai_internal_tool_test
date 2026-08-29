@@ -5,7 +5,8 @@ from django.db import transaction
 from apps.kyc.models.kyc import KYCApplication
 from apps.kyc.providers.kyc_provider import LocalKYCProvider
 from shared.services.activity import build_activity
-from shared.services.primitives import assignments, audit, comments, status_history
+from shared.services.primitives import assignments, comments
+from shared.services.recording import record_assignment, record_note, record_status_change
 
 
 class KYCServiceError(Exception):
@@ -50,18 +51,14 @@ class KYCService:
         with transaction.atomic():
             case.status = KYCApplication.Status.UNDER_REVIEW
             case.save()
-            status_history.record(
-                obj=case,
-                new_status=KYCApplication.Status.UNDER_REVIEW,
+            record_status_change(
+                case,
                 previous_status=previous_status,
+                new_status=KYCApplication.Status.UNDER_REVIEW,
                 actor=actor,
                 note="Review started",
-            )
-            audit.log(
-                actor=actor,
                 app_key="kyc",
                 action="kyc.review_started",
-                obj=case,
                 metadata={"previous_status": previous_status},
             )
         return case
@@ -83,18 +80,14 @@ class KYCService:
             case.provider_reference = verification.get("provider_reference", "")
             case.status = KYCApplication.Status.APPROVED
             case.save()
-            status_history.record(
-                obj=case,
-                new_status=KYCApplication.Status.APPROVED,
+            record_status_change(
+                case,
                 previous_status=previous_status,
+                new_status=KYCApplication.Status.APPROVED,
                 actor=actor,
                 note="KYC approved",
-            )
-            audit.log(
-                actor=actor,
                 app_key="kyc",
                 action="kyc.approved",
-                obj=case,
                 metadata={
                     "customer_name": case.customer_name,
                     "provider_reference": case.provider_reference,
@@ -119,18 +112,14 @@ class KYCService:
             case.status = KYCApplication.Status.REJECTED
             case.rejection_reason = reason
             case.save()
-            status_history.record(
-                obj=case,
-                new_status=KYCApplication.Status.REJECTED,
+            record_status_change(
+                case,
                 previous_status=previous_status,
+                new_status=KYCApplication.Status.REJECTED,
                 actor=actor,
                 note=reason,
-            )
-            audit.log(
-                actor=actor,
                 app_key="kyc",
                 action="kyc.rejected",
-                obj=case,
                 metadata={"reason": reason},
             )
         return case
@@ -146,18 +135,14 @@ class KYCService:
         with transaction.atomic():
             case.status = KYCApplication.Status.ESCALATED
             case.save()
-            status_history.record(
-                obj=case,
-                new_status=KYCApplication.Status.ESCALATED,
+            record_status_change(
+                case,
                 previous_status=previous_status,
+                new_status=KYCApplication.Status.ESCALATED,
                 actor=actor,
                 note=reason,
-            )
-            audit.log(
-                actor=actor,
                 app_key="kyc",
                 action="kyc.escalated",
-                obj=case,
                 metadata={"reason": reason},
             )
         return case
@@ -165,20 +150,12 @@ class KYCService:
     def assign(self, case, assigned_to, assigned_by):
         """Assign a KYC case to a user and record an audit event."""
         with transaction.atomic():
-            record = assignments.assign(
-                obj=case,
+            record = record_assignment(
+                case,
                 assigned_to=assigned_to,
                 assigned_by=assigned_by,
-            )
-            audit.log(
-                actor=assigned_by,
                 app_key="kyc",
                 action="kyc.assigned",
-                obj=case,
-                metadata={
-                    "assigned_to": assigned_to.username,
-                    "assigned_by": assigned_by.username,
-                },
             )
         return record
 
@@ -187,13 +164,12 @@ class KYCService:
         if not body or not body.strip():
             raise KYCServiceError("Note body is required.")
         with transaction.atomic():
-            note = comments.add(obj=case, author=author, body=body)
-            audit.log(
-                actor=author,
+            note = record_note(
+                case,
+                author=author,
+                body=body,
                 app_key="kyc",
                 action="kyc.note_added",
-                obj=case,
-                metadata={"author": author.username},
             )
         return note
 

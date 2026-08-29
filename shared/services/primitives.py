@@ -108,6 +108,28 @@ class assignments:
             object_id=_object_id(obj),
         )
 
+    @staticmethod
+    def latest_map_for(model_class, object_ids=None):
+        """Return a dict mapping primary key to latest assignment for ``model_class``.
+
+        The dict only contains numeric primary keys; string object identifiers
+        are ignored.
+        """
+        ct = ContentType.objects.get_for_model(model_class)
+        qs = Assignment.objects.filter(content_type=ct)
+        if object_ids:
+            qs = qs.filter(object_id__in=[str(pk) for pk in object_ids])
+        latest_by_id = {}
+        for record in qs.order_by("-assigned_at").select_related("assigned_to"):
+            latest_by_id.setdefault(record.object_id, record)
+        return {int(obj_id): record for obj_id, record in latest_by_id.items() if obj_id.isdigit()}
+
+    @staticmethod
+    def currently_assigned_to(model_class, user):
+        """Return primary keys of ``model_class`` records currently assigned to ``user``."""
+        mapping = assignments.latest_map_for(model_class)
+        return [pk for pk, record in mapping.items() if record.assigned_to_id == user.id]
+
 
 class status_history:
     """Convenience namespace for status transition records."""

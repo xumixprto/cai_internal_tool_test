@@ -1,7 +1,6 @@
 """KYC app views."""
 
 from django.contrib import messages
-from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
@@ -21,6 +20,7 @@ from apps.kyc.services.kyc import KYCService, KYCServiceError
 from core.navigation.breadcrumbs import app_breadcrumbs
 from core.rbac.mixins import AppAccessRequiredMixin, AppActionRequiredMixin
 from core.rbac.services import can_perform_action
+from shared.services.primitives import assignments
 
 
 class KYCQueueView(AppAccessRequiredMixin, ListView):
@@ -57,22 +57,7 @@ class KYCQueueView(AppAccessRequiredMixin, ListView):
         return qs
 
     def _filter_by_current_assignee(self, qs, assigned_to):
-        from shared.models.primitives import Assignment
-
-        ct = ContentType.objects.get_for_model(KYCApplication)
-        latest_by_object = {}
-        for record in (
-            Assignment.objects.filter(content_type=ct)
-            .order_by("-assigned_at")
-            .select_related("assigned_to")
-        ):
-            latest_by_object.setdefault(record.object_id, record)
-        case_ids = [
-            int(obj_id)
-            for obj_id, record in latest_by_object.items()
-            if record.assigned_to_id == assigned_to.id and obj_id.isdigit()
-        ]
-        return qs.filter(pk__in=case_ids)
+        return qs.filter(pk__in=assignments.currently_assigned_to(KYCApplication, assigned_to))
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -338,14 +323,4 @@ def _verification_badge_style(verification: str) -> str:
 
 
 def _current_assignment_map(case_ids):
-    from shared.models.primitives import Assignment
-
-    ct = ContentType.objects.get_for_model(KYCApplication)
-    latest_by_id = {}
-    for record in (
-        Assignment.objects.filter(content_type=ct, object_id__in=[str(pk) for pk in case_ids])
-        .order_by("-assigned_at")
-        .select_related("assigned_to")
-    ):
-        latest_by_id.setdefault(record.object_id, record)
-    return {int(obj_id): record for obj_id, record in latest_by_id.items()}
+    return assignments.latest_map_for(KYCApplication, object_ids=case_ids)

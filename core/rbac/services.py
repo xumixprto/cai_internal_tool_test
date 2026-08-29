@@ -72,6 +72,6 @@ def set_user_access(user, role, is_active):
     user.is_active = is_active
     user.save()
     # Force Django to recompute permission caches after group changes.
-    for attr in ("_perm_cache", "_group_perm_cache"):
+    for attr in ("_perm_cache", "_group_perm_cache", "_user_perm_cache"):
         if hasattr(user, attr):
             delattr(user, attr)

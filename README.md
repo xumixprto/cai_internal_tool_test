@@ -2,19 +2,18 @@
 
 A prototype for a reusable internal tools platform built with Django.
 
-Milestone 4 adds shared frontend and backend primitives usable by future business
-applications:
+Milestone 8 hardens the developer experience now that Refund Review, Vendor
+Approval, and KYC Review have proven the platform:
 
-- typed action permissions (`AppAction`) in the manifest
-- authorization decorators and class-based mixins for app access and actions
-- the `/apps/<app-key>/` URL convention
-- app-aware breadcrumbs
-- shared frontend components (headers, cards, tables, filters, pagination, forms, modals, alerts, badges, empty states)
-- shared backend primitives (`TimestampedModel`, `AuditLog`, `Comment`, `Assignment`, `StatusHistory`)
-- a developer-only `/dev/components/` showcase
+- fixes the disappearing-app sidebar bug
+- adds navigation regression tests
+- introduces `create_internal_app` for scaffolding new business apps
+- extracts small shared abstractions (`shared/services/recording`, assignment helpers) from real app duplication
+- normalizes conventions across Refund/Vendor/KYC
+- adds fail-fast manifest validation
+- adds architecture tests protecting the platform boundary
 
-No real business applications exist yet; the Dashboard correctly shows
-`Applications: 0` until one is registered.
+Three real business apps are now live under `/apps/<app-key>/`.
 
 ---
 
@@ -57,9 +56,8 @@ and `shared/services/primitives.py`.
 
 ### `apps/`
 
-Individual business applications. There are no real business applications yet;
-they will be added in later milestones. `apps/` currently contains only
-`__init__.py` and `README.md`.
+Individual business applications. Refund Review, Vendor Approval, and KYC Review
+are real, independent apps registered through the App Registry.
 
 ---
 
@@ -554,12 +552,14 @@ registered app and action permissions.
 ## Developer commands
 
 ```bash
+python manage.py create_internal_app  # scaffold a new business app
 python manage.py migrate              # apply migrations
 python manage.py sync_app_permissions # create/update app permissions
 python manage.py seed_demo_users      # create/reset demo accounts
 python manage.py runserver            # start the dev server
 ```
 
+`create_internal_app` generates `apps/<key>/` following platform conventions.
 `sync_app_permissions` is needed after adding a business app or changing its
 permission set. The seed command calls it automatically.
 
@@ -584,30 +584,31 @@ ruff format .
 
 ## Current milestone
 
-Milestone 4 delivers:
+Milestone 8 delivers:
 
-- `AppAction` typed action permissions in `AppManifest`
-- `require_app_action` decorator and `AppActionRequiredMixin`
-- `AppAccessRequiredMixin` for class-based views
-- `can_perform_action()` requiring app access + action permission
-- `/apps/<app-key>/` URL convention documented
-- `app_breadcrumbs()` using App Registry data
-- Admin user-access UI with per-app and per-action checkboxes
-- Preservation of unrelated and cross-app permissions on save
-- Shared backend primitives (`TimestampedModel`, `AuditLog`, `Comment`,
-  `Assignment`, `StatusHistory`) with generic object references
-- Shared frontend components for tables, filters, pagination, forms, messages,
-  badges, alerts, modals, and detail sections
-- `/dev/components/` developer showcase with admin-only access
-- Comprehensive tests for authorization, admin permissions, backend primitives,
-  and the component showcase
-- Updated README documenting frontend/backend primitives, authorization helpers,
-  and URL convention
+- Fixed the disappearing-app sidebar bug by removing a view that overwrote
+  `nav_items` and invalidating the `_user_perm_cache` permission cache.
+- Navigation regression tests covering Dashboard, Refund/Vendor/KYC queues and
+  details, POST redirects, unauthorized app hiding, and admin visibility.
+- `python manage.py create_internal_app <key>` scaffold command, generating
+  `apps/<key>/` with manifest, AppConfig, URLs, starter view/template, and
+  RBAC baseline tests.
+- Shared `shared/services/recording` helpers for status changes, assignments,
+  and notes, plus `assignments.latest_map_for()` / `currently_assigned_to()`
+  shared assignment helpers used by all three apps.
+- Normalized service/provider/view/template patterns across Refund, Vendor,
+  and KYC.
+- Fail-fast manifest validation for keys, duplicate registrations, access/action
+  permission conventions, and URL references.
+- Architecture tests guarding the `core` → no `apps/` import boundary and the
+  `/apps/<key>/` URL convention.
+- `BUILDING_APPS.md` developer documentation.
 
 ## Future milestones
 
-Later work will add:
+Later work may add:
 
-- Real business apps (Refund Review, KYC Review, Vendor Approval, etc.)
-- Provider integrations (payment APIs, document APIs)
+- Platform polish, audit improvements, and pilot-readiness cleanups
+- Additional business apps using the scaffold
+- Provider integrations with real external services
 - Production SSO

@@ -179,6 +179,6 @@ def set_user_app_access(
     user.user_permissions.set(new_ids)
     # Invalidate Django permission caches.
     user.refresh_from_db(fields=["user_permissions"])
-    for attr in ("_perm_cache", "_group_perm_cache"):
+    for attr in ("_perm_cache", "_group_perm_cache", "_user_perm_cache"):
         if hasattr(user, attr):
             delattr(user, attr)
