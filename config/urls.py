@@ -14,6 +14,7 @@ urlpatterns = [
     path("dev/components/", core_views.components_showcase, name="dev_components"),
     # Business applications are mounted under /apps/<app-key>/ by convention.
     path("apps/refunds/", include("apps.refunds.urls")),
+    path("apps/vendors/", include("apps.vendors.urls")),
 ]
 
 handler403 = "core.views.permission_denied"

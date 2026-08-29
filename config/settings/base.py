@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     "core.admin_panel",
     "shared",
     "apps.refunds",
+    "apps.vendors",
 ]
 
 MIDDLEWARE = [
