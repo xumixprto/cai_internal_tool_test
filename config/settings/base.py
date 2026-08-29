@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     "shared",
     "apps.refunds",
     "apps.vendors",
+    "apps.kyc",
 ]
 
 MIDDLEWARE = [

@@ -3,44 +3,75 @@
 {% block title %}{{ page_title }}{% endblock %}
 
 {% block content %}
-  {% include "components/page_header.html" with title=page_title subtitle="Vendor application details and review actions." %}
+  {% include "components/page_header.html" with title=page_title subtitle="KYC case details and review actions." %}
 
   <div class="row">
     <div class="col-lg-8">
       <div class="card border-0 shadow-sm mb-4">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-start mb-3">
-            <h5 class="card-title fw-semibold mb-0">Vendor Information</h5>
-            <span class="badge rounded-pill bg-{{ status_badge_style|default:'secondary' }}">{{ vendor.get_status_display }}</span>
+            <h5 class="card-title fw-semibold mb-0">Identity</h5>
+            <span class="badge rounded-pill bg-{{ status_badge_style|default:'secondary' }}">{{ case.get_status_display }}</span>
           </div>
           <dl class="row mb-0">
-            <dt class="col-sm-4 text-muted small">Company</dt>
-            <dd class="col-sm-8">{{ vendor.company_name }}<br><span class="text-muted small">{{ vendor.contact_email }}</span></dd>
+            <dt class="col-sm-4 text-muted small">Customer</dt>
+            <dd class="col-sm-8">{{ case.customer_name }}<br><span class="text-muted small">{{ case.customer_identifier }}</span></dd>
 
             <dt class="col-sm-4 text-muted small">Country</dt>
-            <dd class="col-sm-8">{{ vendor.country }}</dd>
+            <dd class="col-sm-8">{{ case.country }}</dd>
 
-            <dt class="col-sm-4 text-muted small">Category</dt>
-            <dd class="col-sm-8">{{ vendor.get_category_display }}</dd>
+            <dt class="col-sm-4 text-muted small">Date of Birth</dt>
+            <dd class="col-sm-8">{{ case.date_of_birth|date:"Y-m-d" }}</dd>
 
-            <dt class="col-sm-4 text-muted small">Tax / Company ID</dt>
-            <dd class="col-sm-8">{{ vendor.tax_id }}</dd>
+            <dt class="col-sm-4 text-muted small">Document Type</dt>
+            <dd class="col-sm-8">{{ case.get_document_type_display }}</dd>
 
-            <dt class="col-sm-4 text-muted small">Estimated Annual Spend</dt>
-            <dd class="col-sm-8">{{ vendor.estimated_annual_spend }} USD</dd>
+            <dt class="col-sm-4 text-muted small">Document Identifier</dt>
+            <dd class="col-sm-8"><code>{{ case.document_identifier }}</code></dd>
+          </dl>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <h5 class="card-title fw-semibold mb-0">Risk &amp; Screening</h5>
+            <span class="badge rounded-pill bg-{{ verification_badge_style|default:'secondary' }}">{{ case.get_provider_verification_status_display }}</span>
+          </div>
+          <dl class="row mb-0">
+            <dt class="col-sm-4 text-muted small">Risk Score</dt>
+            <dd class="col-sm-8">{{ case.risk_score }}</dd>
 
             <dt class="col-sm-4 text-muted small">Risk Level</dt>
-            <dd class="col-sm-8"><span class="badge rounded-pill bg-{{ risk_badge_style|default:'secondary' }}">{{ vendor.get_risk_level_display }}</span></dd>
+            <dd class="col-sm-8"><span class="badge rounded-pill bg-{{ risk_badge_style|default:'secondary' }}">{{ case.get_risk_level_display }}</span></dd>
 
+            <dt class="col-sm-4 text-muted small">Provider Reference</dt>
+            <dd class="col-sm-8">{% if case.provider_reference %}<code>{{ case.provider_reference }}</code>{% else %}—{% endif %}</dd>
+
+            <dt class="col-sm-4 text-muted small">Screening Flags</dt>
+            <dd class="col-sm-8">{{ case.screening_flags|default:"—" }}</dd>
+          </dl>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+          <h5 class="card-title fw-semibold mb-3">Review</h5>
+          <dl class="row mb-0">
             <dt class="col-sm-4 text-muted small">Submitted</dt>
-            <dd class="col-sm-8">{{ vendor.created_at|date:"Y-m-d H:i" }}</dd>
+            <dd class="col-sm-8">{{ case.submitted_at|date:"Y-m-d H:i" }}</dd>
 
             <dt class="col-sm-4 text-muted small">Updated</dt>
-            <dd class="col-sm-8">{{ vendor.updated_at|date:"Y-m-d H:i" }}</dd>
+            <dd class="col-sm-8">{{ case.updated_at|date:"Y-m-d H:i" }}</dd>
 
             {% if current_assignment %}
               <dt class="col-sm-4 text-muted small">Assigned To</dt>
               <dd class="col-sm-8">{{ current_assignment.assigned_to }}</dd>
+            {% endif %}
+
+            {% if case.rejection_reason %}
+              <dt class="col-sm-4 text-muted small">Rejection Reason</dt>
+              <dd class="col-sm-8">{{ case.rejection_reason }}</dd>
             {% endif %}
           </dl>
         </div>
@@ -55,21 +86,25 @@
           <h5 class="card-title fw-semibold mb-3">Actions</h5>
 
           {% if is_terminal %}
-            <p class="text-muted mb-0">This application is {{ vendor.get_status_display|lower }}.</p>
+            <p class="text-muted mb-0">This case is {{ case.get_status_display|lower }}.</p>
           {% else %}
             {% if can_start_review %}
               <button type="button" class="btn btn-outline-info w-100 mb-2" data-bs-toggle="modal" data-bs-target="#reviewModal">Start Review</button>
+            {% endif %}
+
+            {% if can_return_to_review %}
+              <button type="button" class="btn btn-outline-info w-100 mb-2" data-bs-toggle="modal" data-bs-target="#reviewModal">Return to Review</button>
             {% endif %}
 
             {% if can_approve_action %}
               <button type="button" class="btn btn-success w-100 mb-2" data-bs-toggle="modal" data-bs-target="#approveModal">Approve</button>
             {% endif %}
 
-            {% if can_request_changes %}
-              <button type="button" class="btn btn-warning w-100 mb-2" data-bs-toggle="modal" data-bs-target="#requestChangesModal">Request Changes</button>
+            {% if can_escalate_action %}
+              <button type="button" class="btn btn-warning w-100 mb-2" data-bs-toggle="modal" data-bs-target="#escalateModal">Escalate</button>
             {% endif %}
 
-            {% if can_reject %}
+            {% if can_reject_action %}
               <button type="button" class="btn btn-danger w-100 mb-2" data-bs-toggle="modal" data-bs-target="#rejectModal">Reject</button>
             {% endif %}
 
@@ -77,8 +112,8 @@
               <button type="button" class="btn btn-outline-primary w-100 mb-2" data-bs-toggle="modal" data-bs-target="#assignModal">Assign</button>
             {% endif %}
 
-            {% if not can_start_review and not can_approve_action and not can_request_changes and not can_reject and not can_assign %}
-              <p class="text-muted mb-0">You do not have permission to perform actions on this application.</p>
+            {% if not can_start_review and not can_return_to_review and not can_approve_action and not can_escalate_action and not can_reject_action and not can_assign %}
+              <p class="text-muted mb-0">You do not have permission to perform actions on this case.</p>
             {% endif %}
           {% endif %}
         </div>
@@ -87,7 +122,7 @@
       <div class="card border-0 shadow-sm mb-4">
         <div class="card-body">
           <h5 class="card-title fw-semibold mb-3">Add Note</h5>
-          <form method="post" action="{% url 'vendors:note' vendor.pk %}">
+          <form method="post" action="{% url 'kyc:note' case.pk %}">
             {% csrf_token %}
             {% include "components/form_field.html" with field=note_form.body %}
             <button type="submit" class="btn btn-outline-secondary btn-sm w-100">Add Note</button>
@@ -118,22 +153,24 @@
     </div>
   </div>
 
-  <!-- Start Review Modal -->
+  <!-- Start / Return to Review Modal -->
   <div class="modal fade" id="reviewModal" tabindex="-1" aria-labelledby="reviewModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
-        <form method="post" action="{% url 'vendors:review' vendor.pk %}">
+        <form method="post" action="{% url 'kyc:review' case.pk %}">
           {% csrf_token %}
           <div class="modal-header">
-            <h5 class="modal-title" id="reviewModalLabel">Start Review — Vendor #{{ vendor.pk }}</h5>
+            <h5 class="modal-title" id="reviewModalLabel">
+              {% if can_start_review %}Start Review{% else %}Return to Review{% endif %} — KYC #{{ case.pk }}
+            </h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            Move <strong>{{ vendor.company_name }}</strong> to under review?
+            Move <strong>{{ case.customer_name }}</strong> to under review?
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-outline-info">Start Review</button>
+            <button type="submit" class="btn btn-outline-info">Move to Under Review</button>
           </div>
         </form>
       </div>
@@ -144,41 +181,41 @@
   <div class="modal fade" id="approveModal" tabindex="-1" aria-labelledby="approveModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
-        <form method="post" action="{% url 'vendors:approve' vendor.pk %}">
+        <form method="post" action="{% url 'kyc:approve' case.pk %}">
           {% csrf_token %}
           <div class="modal-header">
-            <h5 class="modal-title" id="approveModalLabel">Approve Vendor #{{ vendor.pk }}</h5>
+            <h5 class="modal-title" id="approveModalLabel">Approve KYC #{{ case.pk }}</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            Are you sure you want to approve <strong>{{ vendor.company_name }}</strong>?
+            Are you sure you want to approve <strong>{{ case.customer_name }}</strong>? The provider verification check will run again.
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-success">Approve Vendor</button>
+            <button type="submit" class="btn btn-success">Approve KYC</button>
           </div>
         </form>
       </div>
     </div>
   </div>
 
-  <!-- Request Changes Modal -->
-  <div class="modal fade" id="requestChangesModal" tabindex="-1" aria-labelledby="requestChangesModalLabel" aria-hidden="true">
+  <!-- Escalate Modal -->
+  <div class="modal fade" id="escalateModal" tabindex="-1" aria-labelledby="escalateModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
-        <form method="post" action="{% url 'vendors:request_changes' vendor.pk %}">
+        <form method="post" action="{% url 'kyc:escalate' case.pk %}">
           {% csrf_token %}
           <div class="modal-header">
-            <h5 class="modal-title" id="requestChangesModalLabel">Request Changes — Vendor #{{ vendor.pk }}</h5>
+            <h5 class="modal-title" id="escalateModalLabel">Escalate KYC #{{ case.pk }}</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            <p>Specify what the vendor must provide or update.</p>
-            {% include "components/form_field.html" with field=request_changes_form.reason %}
+            <p>Please provide a reason for escalation.</p>
+            {% include "components/form_field.html" with field=escalate_form.reason %}
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-warning">Request Changes</button>
+            <button type="submit" class="btn btn-warning">Escalate</button>
           </div>
         </form>
       </div>
@@ -189,19 +226,19 @@
   <div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
-        <form method="post" action="{% url 'vendors:reject' vendor.pk %}">
+        <form method="post" action="{% url 'kyc:reject' case.pk %}">
           {% csrf_token %}
           <div class="modal-header">
-            <h5 class="modal-title" id="rejectModalLabel">Reject Vendor #{{ vendor.pk }}</h5>
+            <h5 class="modal-title" id="rejectModalLabel">Reject KYC #{{ case.pk }}</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            <p>Please provide a reason for rejecting this vendor.</p>
+            <p>Please provide a reason for rejecting this case.</p>
             {% include "components/form_field.html" with field=reject_form.reason %}
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-danger">Reject Vendor</button>
+            <button type="submit" class="btn btn-danger">Reject KYC</button>
           </div>
         </form>
       </div>
@@ -212,10 +249,10 @@
   <div class="modal fade" id="assignModal" tabindex="-1" aria-labelledby="assignModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
-        <form method="post" action="{% url 'vendors:assign' vendor.pk %}">
+        <form method="post" action="{% url 'kyc:assign' case.pk %}">
           {% csrf_token %}
           <div class="modal-header">
-            <h5 class="modal-title" id="assignModalLabel">Assign Vendor #{{ vendor.pk }}</h5>
+            <h5 class="modal-title" id="assignModalLabel">Assign KYC #{{ case.pk }}</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
