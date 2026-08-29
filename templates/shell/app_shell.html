@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block body %}
+<div class="app-shell d-flex flex-column vh-100">
+  {% include "shell/topbar.html" %}
+  <div class="app-body d-flex flex-grow-1 overflow-hidden">
+    {% include "shell/sidebar.html" %}
+    <main id="app-content" class="app-main flex-grow-1 overflow-auto p-4">
+      {% include "shell/breadcrumbs.html" %}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+{% endblock %}

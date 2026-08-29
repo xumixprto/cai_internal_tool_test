@@ -1,0 +1,20 @@
+[project]
+name = "internal-tools-platform"
+version = "0.1.0"
+description = "Reusable internal tools platform foundation (Milestone 1)"
+requires-python = ">=3.12"
+dependencies = [
+    "Django>=5.0,<6.0",
+    "python-dotenv",
+]
+
+[project.optional-dependencies]
+dev = ["ruff"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 99
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+ignore = []

@@ -1,0 +1,26 @@
+<div class="table-responsive">
+  <table class="table table-hover align-middle mb-0">
+    {% if headers %}
+      <thead>
+        <tr>
+          {% for header in headers %}
+            <th>{{ header }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+    {% endif %}
+    <tbody>
+      {% for row in rows %}
+        <tr>
+          {% for cell in row %}
+            {% if safe %}
+              <td>{{ cell|safe }}</td>
+            {% else %}
+              <td>{{ cell }}</td>
+            {% endif %}
+          {% endfor %}
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

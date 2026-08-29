@@ -1,0 +1,8 @@
+{% if page_title and page_title != "Internal Tools" %}
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb mb-0">
+      <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Home</a></li>
+      <li class="breadcrumb-item active" aria-current="page">{{ page_title }}</li>
+    </ol>
+  </nav>
+{% endif %}

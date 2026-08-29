@@ -1,0 +1,12 @@
+<aside class="sidebar bg-light border-end p-3 d-flex flex-column">
+  <nav class="nav flex-column">
+    {% for item in nav_items %}
+      <a class="nav-link d-flex align-items-center gap-2 mb-1 {% if item.active %}active{% endif %}"
+         href="{{ item.url }}"
+         aria-current="{% if item.active %}page{% else %}false{% endif %}">
+        <i class="bi bi-{{ item.icon }}"></i>
+        <span>{{ item.name }}</span>
+      </a>
+    {% endfor %}
+  </nav>
+</aside>
