@@ -1,8 +1,8 @@
 """Centralized navigation registry for the platform.
 
-Navigation is intentionally simple in Milestone 1.  Each entry references a
-URL name so the system remains compatible with a future App Registry that
-will discover installed apps and permission-check their visibility.
+Navigation entries use URL names so the system remains compatible with a future
+App Registry.  Items may declare a permission; only users with that permission
+see the entry.
 """
 
 from django.urls import reverse
@@ -16,16 +16,11 @@ NAV_ITEMS = [
         "icon": "house",
     },
     {
-        "key": "demo_one",
-        "name": "Demo App One",
-        "url_name": "demo_one:index",
-        "icon": "collection",
-    },
-    {
-        "key": "demo_two",
-        "name": "Demo App Two",
-        "url_name": "demo_two:index",
-        "icon": "clipboard-data",
+        "key": "admin",
+        "name": "Admin",
+        "url_name": "core_admin_panel:index",
+        "icon": "shield-lock",
+        "permission": "core_authentication.access_admin",
     },
 ]
 
@@ -42,11 +37,23 @@ def _current_url_name(request) -> str:
     return namespace or url_name
 
 
+def _is_visible(item, request):
+    """Return True if the current user may see this navigation item."""
+    permission = item.get("permission")
+    if not permission:
+        return True
+    if not request or not request.user.is_authenticated:
+        return False
+    return request.user.has_perm(permission)
+
+
 def get_nav_items(request=None):
     """Return navigation items with resolved URLs and active flags."""
     current = _current_url_name(request) if request else ""
     items = []
     for item in NAV_ITEMS:
+        if not _is_visible(item, request):
+            continue
         new_item = item.copy()
         try:
             new_item["url"] = reverse(item["url_name"])

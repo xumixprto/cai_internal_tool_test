@@ -1,0 +1,32 @@
+{% extends "shell/app_shell.html" %}
+
+{% block content %}
+  {% include "components/page_header.html" with title="Edit Access" subtitle="Edit access for "|add:target_user.username %}
+
+  <div class="card border-0 shadow-sm" style="max-width: 480px;">
+    <div class="card-body">
+      <form method="post" action="{% url 'core_admin_panel:user_edit' target_user.id %}">
+        {% csrf_token %}
+
+        <div class="mb-3">
+          <label for="id_role" class="form-label small text-muted">Role</label>
+          <select name="role" id="id_role" class="form-select">
+            {% for value, label in form.role.field.choices %}
+              <option value="{{ value }}"{% if form.role.value == value %} selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="mb-4 form-check">
+          <input type="checkbox" name="is_active" id="id_is_active" class="form-check-input"{% if form.is_active.value %} checked{% endif %}>
+          <label for="id_is_active" class="form-check-label">Active</label>
+        </div>
+
+        <div class="d-flex justify-content-between">
+          <a href="{% url 'core_admin_panel:index' %}" class="btn btn-outline-secondary btn-sm">Cancel</a>
+          <button type="submit" class="btn btn-primary btn-sm">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

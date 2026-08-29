@@ -1,7 +1,21 @@
 <header class="topbar d-flex align-items-center justify-content-between px-4 bg-white border-bottom">
   <span class="fw-semibold">Internal Tools Platform</span>
-  <div class="d-flex align-items-center gap-2">
-    <span class="text-muted small">Demo User</span>
-    <i class="bi bi-person-circle fs-5 text-muted"></i>
-  </div>
+  {% if user.is_authenticated %}
+    <div class="d-flex align-items-center gap-3">
+      <div class="dropdown">
+        <button class="btn btn-link text-decoration-none text-dark dropdown-toggle p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+          {{ user.username }}
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li>
+            <form method="post" action="{% url 'core_authentication:logout' %}" class="d-inline">
+              {% csrf_token %}
+              <button type="submit" class="dropdown-item">Logout</button>
+            </form>
+          </li>
+        </ul>
+      </div>
+      <i class="bi bi-person-circle fs-5 text-muted"></i>
+    </div>
+  {% endif %}
 </header>

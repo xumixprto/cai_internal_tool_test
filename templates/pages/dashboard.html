@@ -1,35 +1,41 @@
 {% extends "shell/app_shell.html" %}
 
+{% load platform_extras %}
+
 {% block content %}
   {% include "components/page_header.html" with title="Internal Tools" subtitle="Platform dashboard" %}
 
   <div class="row g-4 mb-4">
-    <div class="col-md-4">
+    <div class="col-md-3 col-sm-6">
       <div class="stat-card">
         <div class="text-muted small">Applications</div>
         <div class="fs-3 fw-semibold">{{ stats.applications }}</div>
       </div>
     </div>
-    <div class="col-md-4">
-      <div class="stat-card">
-        <div class="text-muted small">Open Tasks</div>
-        <div class="fs-3 fw-semibold">{{ stats.open_tasks }}</div>
-      </div>
-    </div>
-    <div class="col-md-4">
+    <div class="col-md-3 col-sm-6">
       <div class="stat-card">
         <div class="text-muted small">Current User</div>
         <div class="fs-3 fw-semibold">{{ stats.current_user }}</div>
       </div>
     </div>
+    <div class="col-md-3 col-sm-6">
+      <div class="stat-card">
+        <div class="text-muted small">Role</div>
+        <div class="fs-3 fw-semibold">{{ stats.role }}</div>
+      </div>
+    </div>
   </div>
 
   <h5 class="mb-3">Applications</h5>
-  <div class="row g-4">
-    {% for card in app_cards %}
-      <div class="col-md-6 col-lg-4">
-        {% include "components/card.html" with title=card.name description="Example application" link_url=card.url link_text="Open →" %}
-      </div>
-    {% endfor %}
-  </div>
+  {% if app_cards %}
+    <div class="row g-4">
+      {% for card in app_cards %}
+        <div class="col-md-6 col-lg-4">
+          {% include "components/card.html" with title=card.name description="Example application" link_url=card.url link_text="Open →" %}
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    {% include "components/empty_state.html" with message="No applications available yet. Applications registered with the Internal Tools Platform will appear here." %}
+  {% endif %}
 {% endblock %}

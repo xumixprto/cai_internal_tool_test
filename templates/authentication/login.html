@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% load platform_extras %}
+
+{% block title %}Sign in — Internal Tools Platform{% endblock %}
+
+{% block body %}
+<div class="vh-100 d-flex align-items-center justify-content-center bg-light">
+  <div class="card shadow-sm" style="width: 100%; max-width: 400px;">
+    <div class="card-body p-4">
+      <h1 class="h4 fw-semibold mb-4 text-center">Internal Tools Platform</h1>
+
+      {% if form.errors %}
+        <div class="alert alert-danger small" role="alert">
+          The username or password you entered is incorrect.
+        </div>
+      {% endif %}
+
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags|default:'info' }} small" role="alert">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <form method="post" action="{% url 'core_authentication:login' %}">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
+
+        <div class="mb-3">
+          <label for="id_username" class="form-label small text-muted">Username</label>
+          <input type="text" name="username" id="id_username" class="form-control" autofocus autocomplete="username" required>
+        </div>
+
+        <div class="mb-4">
+          <label for="id_password" class="form-label small text-muted">Password</label>
+          <input type="password" name="password" id="id_password" class="form-control" autocomplete="current-password" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100">Sign in</button>
+      </form>
+
+      <hr class="my-4">
+
+      <div class="small text-muted">
+        <p class="mb-1 fw-semibold">Local demo credentials</p>
+        <ul class="list-unstyled mb-0">
+          <li><code>admin / admin</code></li>
+          <li><code>user1 / user1</code></li>
+          <li><code>user2 / user2</code></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
