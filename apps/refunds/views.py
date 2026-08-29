@@ -1,7 +1,6 @@
 """Refund app views."""
 
 from django.contrib import messages
-from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
@@ -20,6 +19,7 @@ from apps.refunds.services.refunds import RefundService, RefundServiceError
 from core.navigation.breadcrumbs import app_breadcrumbs
 from core.rbac.mixins import AppAccessRequiredMixin, AppActionRequiredMixin
 from core.rbac.services import can_perform_action
+from shared.services.primitives import assignments
 
 
 class RefundQueueView(AppAccessRequiredMixin, ListView):
@@ -51,22 +51,7 @@ class RefundQueueView(AppAccessRequiredMixin, ListView):
         return qs
 
     def _filter_by_current_assignee(self, qs, assigned_to):
-        from shared.models.primitives import Assignment
-
-        ct = ContentType.objects.get_for_model(RefundRequest)
-        latest_by_object = {}
-        for record in (
-            Assignment.objects.filter(content_type=ct)
-            .order_by("-assigned_at")
-            .select_related("assigned_to")
-        ):
-            latest_by_object.setdefault(record.object_id, record)
-        refund_ids = [
-            int(obj_id)
-            for obj_id, record in latest_by_object.items()
-            if record.assigned_to_id == assigned_to.id and obj_id.isdigit()
-        ]
-        return qs.filter(pk__in=refund_ids)
+        return qs.filter(pk__in=assignments.currently_assigned_to(RefundRequest, assigned_to))
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -75,7 +60,6 @@ class RefundQueueView(AppAccessRequiredMixin, ListView):
         get_copy.pop("page", None)
         context["extra_params"] = "&" + get_copy.urlencode() if get_copy else ""
         context["page_title"] = "Refund Review"
-        context["nav_items"] = None  # provided by context processor
         context["badge_style"] = _badge_style
         refunds = list(context["refunds"])
         context["current_assignments"] = _current_assignment_map([r.pk for r in refunds])
@@ -247,14 +231,4 @@ def _badge_style(status: str) -> str:
 
 
 def _current_assignment_map(refund_ids):
-    from shared.models.primitives import Assignment
-
-    ct = ContentType.objects.get_for_model(RefundRequest)
-    latest_by_id = {}
-    for record in (
-        Assignment.objects.filter(content_type=ct, object_id__in=[str(pk) for pk in refund_ids])
-        .order_by("-assigned_at")
-        .select_related("assigned_to")
-    ):
-        latest_by_id.setdefault(record.object_id, record)
-    return {int(obj_id): record for obj_id, record in latest_by_id.items()}
+    return assignments.latest_map_for(RefundRequest, object_ids=refund_ids)

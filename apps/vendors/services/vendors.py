@@ -5,7 +5,8 @@ from django.db import transaction
 from apps.vendors.models.vendor import VendorApplication
 from apps.vendors.providers.vendor_provider import LocalVendorProvider
 from shared.services.activity import build_activity
-from shared.services.primitives import assignments, audit, comments, status_history
+from shared.services.primitives import assignments, comments
+from shared.services.recording import record_assignment, record_note, record_status_change
 
 
 class VendorServiceError(Exception):
@@ -48,18 +49,14 @@ class VendorService:
         with transaction.atomic():
             vendor.status = VendorApplication.Status.UNDER_REVIEW
             vendor.save()
-            status_history.record(
-                obj=vendor,
-                new_status=VendorApplication.Status.UNDER_REVIEW,
+            record_status_change(
+                vendor,
                 previous_status=previous_status,
+                new_status=VendorApplication.Status.UNDER_REVIEW,
                 actor=actor,
                 note="Review started",
-            )
-            audit.log(
-                actor=actor,
                 app_key="vendors",
                 action="vendor.review_started",
-                obj=vendor,
                 metadata={"previous_status": previous_status},
             )
         return vendor
@@ -72,18 +69,14 @@ class VendorService:
             validation = self._provider.validate_vendor(vendor)
             vendor.status = VendorApplication.Status.APPROVED
             vendor.save()
-            status_history.record(
-                obj=vendor,
-                new_status=VendorApplication.Status.APPROVED,
+            record_status_change(
+                vendor,
                 previous_status=previous_status,
+                new_status=VendorApplication.Status.APPROVED,
                 actor=actor,
                 note="Vendor approved",
-            )
-            audit.log(
-                actor=actor,
                 app_key="vendors",
                 action="vendor.approved",
-                obj=vendor,
                 metadata={
                     "company_name": vendor.company_name,
                     "validation_reference": validation.get("validation_reference"),
@@ -108,18 +101,14 @@ class VendorService:
         with transaction.atomic():
             vendor.status = VendorApplication.Status.REJECTED
             vendor.save()
-            status_history.record(
-                obj=vendor,
-                new_status=VendorApplication.Status.REJECTED,
+            record_status_change(
+                vendor,
                 previous_status=previous_status,
+                new_status=VendorApplication.Status.REJECTED,
                 actor=actor,
                 note=reason,
-            )
-            audit.log(
-                actor=actor,
                 app_key="vendors",
                 action="vendor.rejected",
-                obj=vendor,
                 metadata={"reason": reason},
             )
         return vendor
@@ -139,18 +128,14 @@ class VendorService:
         with transaction.atomic():
             vendor.status = VendorApplication.Status.CHANGES_REQUESTED
             vendor.save()
-            status_history.record(
-                obj=vendor,
-                new_status=VendorApplication.Status.CHANGES_REQUESTED,
+            record_status_change(
+                vendor,
                 previous_status=previous_status,
+                new_status=VendorApplication.Status.CHANGES_REQUESTED,
                 actor=actor,
                 note=reason,
-            )
-            audit.log(
-                actor=actor,
                 app_key="vendors",
                 action="vendor.changes_requested",
-                obj=vendor,
                 metadata={"reason": reason},
             )
         return vendor
@@ -158,20 +143,12 @@ class VendorService:
     def assign(self, vendor, assigned_to, assigned_by):
         """Assign a vendor application to a user and record an audit event."""
         with transaction.atomic():
-            record = assignments.assign(
-                obj=vendor,
+            record = record_assignment(
+                vendor,
                 assigned_to=assigned_to,
                 assigned_by=assigned_by,
-            )
-            audit.log(
-                actor=assigned_by,
                 app_key="vendors",
                 action="vendor.assigned",
-                obj=vendor,
-                metadata={
-                    "assigned_to": assigned_to.username,
-                    "assigned_by": assigned_by.username,
-                },
             )
         return record
 
@@ -180,13 +157,12 @@ class VendorService:
         if not body or not body.strip():
             raise VendorServiceError("Note body is required.")
         with transaction.atomic():
-            note = comments.add(obj=vendor, author=author, body=body)
-            audit.log(
-                actor=author,
+            note = record_note(
+                vendor,
+                author=author,
+                body=body,
                 app_key="vendors",
                 action="vendor.note_added",
-                obj=vendor,
-                metadata={"author": author.username},
             )
         return note
 

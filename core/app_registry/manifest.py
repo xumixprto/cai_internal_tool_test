@@ -17,6 +17,13 @@ def _is_valid_permission(value: str) -> bool:
     return len(parts) == 2 and _is_valid_key(parts[0]) and _is_valid_key(parts[1])
 
 
+_URL_NAME_RE = re.compile(r"^[^:]+:[^:]+$")
+
+
+def _is_valid_url_name(value: str) -> bool:
+    return bool(value and _URL_NAME_RE.match(value))
+
+
 def _label_from_key(key: str) -> str:
     return key.replace("_", " ").strip().title()
 
@@ -68,10 +75,16 @@ class AppManifest:
             errors.append("name is required")
         if not self.description or not self.description.strip():
             errors.append("description is required")
-        if not self.url_name or not self.url_name.strip():
-            errors.append("url_name is required")
-        if not _is_valid_permission(self.access_permission):
-            errors.append(f"access_permission '{self.access_permission}' must be <app>.<codename>")
+        if not _is_valid_url_name(self.url_name):
+            msg = (
+                f"url_name '{self.url_name}' must be a namespaced "
+                "URL reference (<namespace>:<name>)"
+            )
+            errors.append(msg)
+        if self.access_permission != f"{self.key}.access":
+            errors.append(
+                f"access_permission '{self.access_permission}' must be '{self.key}.access'"
+            )
 
         normalized_actions = self._normalize_actions(self.actions)
         for action in normalized_actions:
@@ -81,8 +94,10 @@ class AppManifest:
                 )
             if not _is_valid_key(action.key):
                 errors.append(f"action key '{action.key}' must match {KEY_RE.pattern}")
-            if not _is_valid_permission(action.permission):
-                errors.append(f"action permission '{action.permission}' must be <app>.<codename>")
+            if action.permission != f"{self.key}.{action.key}":
+                errors.append(
+                    f"action permission '{action.permission}' must be '{self.key}.{action.key}'"
+                )
             if not action.label or not action.label.strip():
                 errors.append(f"action label for '{action.key}' is required")
 
