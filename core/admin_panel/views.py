@@ -4,6 +4,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
 from core.admin_panel.forms import UserAccessForm
+from core.app_registry.services import set_user_app_access, sync_app_permissions
 from core.rbac.decorators import admin_required
 from core.rbac.roles import Role
 from core.rbac.services import get_user_role, set_user_access
@@ -32,7 +33,7 @@ def user_list(request):
 @login_required(login_url="/login/")
 @admin_required
 def user_edit(request, user_id):
-    """Edit role and active status for user1/user2 only."""
+    """Edit role, active status, and application access for user1/user2 only."""
     target_user = get_object_or_404(User, pk=user_id)
 
     if target_user.username == PROTECTED_ADMIN_USERNAME:
@@ -44,18 +45,22 @@ def user_edit(request, user_id):
         )
 
     if request.method == "POST":
-        form = UserAccessForm(request.POST)
+        form = UserAccessForm(request.POST, target_user=target_user)
         if form.is_valid():
             role = Role(form.cleaned_data["role"])
             set_user_access(target_user, role, form.cleaned_data["is_active"])
+            # Ensure all app permissions exist before assigning them.
+            sync_app_permissions()
+            set_user_app_access(target_user, form.get_selected_app_keys())
             return redirect(reverse("core_admin_panel:index"))
     else:
         current_role = get_user_role(target_user)
         form = UserAccessForm(
+            target_user=target_user,
             initial={
                 "role": current_role.value if current_role else Role.USER.value,
                 "is_active": target_user.is_active,
-            }
+            },
         )
 
     return render(

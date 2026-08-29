@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     "core",
     "core.authentication",
     "core.rbac",
+    "core.app_registry",
     "core.admin_panel",
     "shared",
 ]

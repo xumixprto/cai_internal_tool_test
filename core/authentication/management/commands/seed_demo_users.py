@@ -1,8 +1,8 @@
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group, Permission
+from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand
 
-from core.rbac.permissions import PlatformPermission
+from core.app_registry.services import sync_app_permissions
 from core.rbac.roles import Role
 
 
@@ -12,7 +12,7 @@ class Command(BaseCommand):
     The credentials are intentionally insecure and exist only for development.
     """
 
-    help = "Create demo users and platform roles for local development."
+    help = "Create demo users, platform roles, and app permissions for local development."
 
     def handle(self, *args, **options):
         User = get_user_model()
@@ -20,8 +20,9 @@ class Command(BaseCommand):
         admin_group, _ = Group.objects.get_or_create(name=Role.ADMIN.value)
         user_group, _ = Group.objects.get_or_create(name=Role.USER.value)
 
-        permission = Permission.objects.get(codename=PlatformPermission.ACCESS_ADMIN_CODENAME)
-        admin_group.permissions.add(permission)
+        # Synchronize all registered application permissions and assign
+        # them to the Admin group.
+        sync_app_permissions()
 
         users = [
             {

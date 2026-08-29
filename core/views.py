@@ -3,6 +3,7 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
+from core.app_registry.services import apps_for_user
 from core.navigation.registry import get_nav_items
 from core.rbac.services import get_user_role
 
@@ -11,7 +12,7 @@ from core.rbac.services import get_user_role
 def dashboard(request):
     """Landing page for authenticated users."""
     nav_items = get_nav_items(request)
-    app_cards = [item for item in nav_items if item["key"] not in ("dashboard", "admin")]
+    app_cards = apps_for_user(request.user)
     role = get_user_role(request.user)
     stats = {
         "applications": len(app_cards),

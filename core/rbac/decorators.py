@@ -2,7 +2,7 @@ from functools import wraps
 
 from django.core.exceptions import PermissionDenied
 
-from core.rbac.services import is_admin
+from core.rbac.services import can_access_app, is_admin
 
 
 def admin_required(view):
@@ -15,3 +15,18 @@ def admin_required(view):
         return view(request, *args, **kwargs)
 
     return wrapper
+
+
+def require_app_access(app_key):
+    """Raise PermissionDenied unless the user may access the given app."""
+
+    def decorator(view):
+        @wraps(view)
+        def wrapper(request, *args, **kwargs):
+            if not can_access_app(request.user, app_key):
+                raise PermissionDenied
+            return view(request, *args, **kwargs)
+
+        return wrapper
+
+    return decorator
